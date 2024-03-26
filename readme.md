@@ -16,7 +16,7 @@ python app.py
 
 ## Commit Message Format
 
-plase use the following commit type
+Please use the following commit type
 
 ```bash
 Feat: Add new feature
