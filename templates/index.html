@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        /* 中文像素字体 */
+        @font-face {
+            font-family: 'MyFont';
+            src: url('https://cdn.jsdelivr.net/gh/oukoukouk/blog-img/202403191330447.otc') format('opentype');
+        }
+
+        body {
+            background-color: #f0f0f0;
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        .pixel {
+            border: 4px solid #000;
+            padding: 10px;
+            background-color: #fff;
+            box-shadow: 0 0 0 4px #fff, 0 0 0 8px #000;
+        }
+
+        .container {
+            width: 60%;
+            height: 30%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .top {
+            height: 30%;
+            border: 4px solid #000;
+            background-color: #c0c0c0;
+            box-shadow: inset 0 0 0 4px #fff, inset 0 0 0 8px #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.8vw;
+        }
+
+        .mid {
+            height: 20%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.3vw;
+            font-family: 'MyFont';
+        }
+
+        .bottom {
+            height: 40%;
+            border: 4px solid #000;
+            background-color: #c0c0c0;
+            box-shadow: inset 0 0 0 4px #fff, inset 0 0 0 8px #000;
+            display: flex;
+            font-size: 1.8vw;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .info {
+            font-family: 'Press Start 2P';
+            position: absolute;
+            width: 17%;
+            height: auto;
+            position: absolute;
+            top: 10%;
+            left: 5%;
+        }
+
+        .minifont {
+            font-size: 1vw;
+            /* 使用vw单位 */
+        }
+
+        .item {
+            margin-bottom: 10px;
+        }
+
+        .red {
+            background-color: red;
+        }
+
+        .green {
+            background-color: green;
+        }
+
+        .gameinfo {
+            font-family: 'Press Start 2P';
+            position: absolute;
+            width: 20%;
+            height: 3%;
+            top: 28%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+        }
+
+        .gameinfo-left {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            /* 字体高度 */
+            font-size: 1vw;
+            flex: 1;
+        }
+
+        .gameinfo-right {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            flex: 7
+        }
+
+        .round-box {
+            border: 4px solid #000;
+            height: 80%;
+            width: 10%;
+        }
+
+        .timeup {
+            position: absolute;
+            width: 40%;
+            height: 30%;
+            top: 25%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .timeup p {
+            font-size: 2vw;
+            text-align: center;
+
+        }
+
+        .leaderbord {
+            position: absolute;
+            right: 0;
+            border: 4px solid #000;
+            padding: 10px;
+            background-color: #c0c0c0;
+            box-shadow: 0 0 0 4px #fff, 0 0 0 8px #000;
+            height: 100%;
+            width: 10%;
+            display: flex;
+            /* 垂直方向 */
+            flex-direction: column;
+        }
+
+        .leaderbord-item {
+            font-size: 0.8vw;
+            margin-top: 0.7vw;
+        }
+
+        .leaderbord-head {
+            height: 3%;
+            font-size: 1vw;
+            text-align: center;
+            /* 下边框 */
+            border-bottom: 4px solid #000;
+        }
+
+        .leaderbord-highlight {
+            /* 给字体颜色 */
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 排行版 -->
+    <div class="leaderbord">
+        <div class="leaderbord-head">
+            leaderbord
+        </div>
+    </div>
+
+    <!-- 倒计时 -->
+    <div class="timeup">
+        <p id="lefttime"></p>
+    </div>
+    <div class="gameinfo pixel">
+        <!-- 四个伸缩格子 left1份 right3份 -->
+        <div class="gameinfo-right" id="round">
+            <div class="round-box"></div>
+            <div class="round-box"></div>
+            <div class="round-box"></div>
+            <div class="round-box"></div>
+            <div class="round-box"></div>
+            <div class="round-box"></div>
+            <div class="round-box"></div>
+            <div class="round-box"></div>
+            <div class="round-box"></div>
+            <div class="round-box"></div>
+
+        </div>
+    </div>
+    <div class="container pixel">
+        <div class="top">
+            Are you ready?
+        </div>
+        <div class="mid">Typing go to start</div>
+        <div class="bottom">
+        </div>
+    </div>
+    <div class="info pixel">
+        <div class="item minifont" id="stuid">stuid: </div>
+        <div class="item minifont" id="times">times: 0</div>
+        <div class="item minifont" id="score">score: 0</div>
+    </div>
+</body>
+
+
+<script>
+    var word = ""
+    var maxWord = 15;
+    var gameTime = false; //判断是否是游戏时间
+    var round = 0; //本地的回合数
+    var pingInterval;// 定义开始定期发送 ping 的函数
+    var isSended = false; //判断是否已经发送
+    var question = ""; //题目
+    var isQuery = false; //判断是否已经查询过题目
+    // var pingUserInfo;
+</script>
+
+<script>
+    // dom事件
+
+    // 监听键盘更新word，只接收字符和退格 最大长度为10
+    document.onkeydown = function (e) {
+        if (isSended) {
+
+            return;
+        }
+        e = e || window.event;
+        var key = e.which || e.keyCode;
+        if (key == 8) {
+            word = word.substring(0, word.length - 1)
+        } else if (key >= 65 && key <= 90) {
+            if (word.length < maxWord) {
+                word += String.fromCharCode(key).toLowerCase()
+            }
+            else {
+                warnning(".bottom")
+            }
+        }
+        printword(word, ".bottom")
+    }
+
+</script>
+
+<script>
+    // 判断是否有cookie为stu-id的值,如果没有就弹输入框 然后注册进cookie里
+    function checkCookie() {
+        var stuId = Cookies.get("stu-id");
+        if (stuId == "" || stuId == null || stuId == undefined) {
+            stuId = prompt("Please enter your student id:", "");
+            if (stuId == "" || stuId == null || stuId == undefined) {
+                //reload
+                location.reload();
+                return;
+            }
+        }
+        //请求服务器 查询id是否合法
+        var isIdExist = false;
+        // 发get请求 /api/getuser?stuId=cookie
+        fetch(`/api/getuser?stuId=${stuId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status == 1) {
+                    document.querySelector("#stuid").innerText = `stuid: ${stuId}`
+                    document.querySelector("#times").innerText = `times: ${data.times}`
+                    document.querySelector("#score").innerText = `score: ${data.score}`
+                    Cookies.set("stu-id", stuId, 30);
+                    startPinging();
+                } else {
+                    alert("Invalid student id. Please try again.");
+                    Cookies.remove("stu-id");
+                    checkCookie();
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("Net error occurred. Please try again later.");
+                checkCookie();
+            });
+        console.log("Welcome again " + stuId);
+    }
+
+    // 根据参数，打印到dom上
+    function printword(s, dom) {
+        var bottom = document.querySelector(dom)
+        // // 修改word里的文本
+        bottom.innerText = s
+    }
+
+    // 动画函数
+    function warnning(dom) {
+        //把.bottom里面的字体变红0.5秒，再变回来，再变0.5 秒再回来
+        var bottom = document.querySelector(dom)
+        bottom.style.color = "red"
+        setTimeout(() => {
+            bottom.style.color = "black"
+            setTimeout(() => {
+                bottom.style.color = "red"
+                setTimeout(() => {
+                    bottom.style.color = "black"
+                }, 500);
+            }, 500)
+        }, 500);
+    }
+
+    // 动画函数
+    function correct(dom) {
+        //把.bottom里面的字体变绿0.5秒，再变回来，异步
+        var bottom = document.querySelector(dom)
+        bottom.style.color = "green"
+        setTimeout(() => {
+            bottom.style.color = "black"
+            setTimeout(() => {
+                bottom.style.color = "green"
+                setTimeout(() => {
+                    bottom.style.color = "black"
+
+                }, 500);
+            }, 500);
+        }, 500);
+    }
+
+    //检测键盘输入
+    function watching() {
+        if (word == "go" && !gameTime) {
+            gameTime = true
+            console.log('Sent start to server');
+            fetch(`/api/getuser?stuId=${Cookies.get("stu-id")}`)
+                .then(response => response.json())
+                .then(data => {
+                    // console.log(data);
+                    if (data.status == 1) {
+                        if (data.times < 1) {
+                            msg = "You have already started the game today. "
+                            //修改mid里的
+                            var mid = document.querySelector(".mid")
+                            //变红色
+                            mid.style.color = "red"
+                            mid.innerText = msg
+                        } else {
+                            //3秒倒计时 修改top里的 3 2 1
+                            var top = document.querySelector(".top")
+                            top.innerText = "3"
+                            setTimeout(() => {
+                                top.innerText = "2"
+                                setTimeout(() => {
+                                    top.innerText = "1"
+                                    setTimeout(() => {
+                                        top.innerText = "GO"
+                                        setTimeout(() => {
+                                            top.innerText = ""
+                                            //游戏开始
+                                            //发送请求
+                                            socket.emit('start', Cookies.get("stu-id"));
+                                            // console.log("sended")
+                                            round = 0;
+                                        }, 1000);
+                                    }, 1000);
+                                }, 1000);
+                            }, 1000);
+
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    alert("Net error occurred. Please try again later.");
+                    //刷新
+                    location.reload();
+                })
+                .finally(() => {
+                    word = ""
+                    printword(word, ".bottom")
+                });
+        }
+        else if (gameTime) {
+            //判断word的长度是否question的长度一致 触发submit
+            if (!isSended && question != "" && word.length >= question.length) {
+                //发送请求
+                socket.emit('submit', word, round);
+                console.log('Submit');
+                isSended = true;
+            }
+        }
+    }
+
+    //获取排行榜
+    function getRank() {
+        fetch(`/api/getrank`)
+            .then(response => response.json())
+            .then(data => {
+                // console.log(data)
+                var rankDom = document.querySelector(".leaderbord")
+                rankDom.innerHTML = ""
+                var rankHead = document.createElement("div")
+                rankHead.className = "leaderbord-head"
+                rankHead.innerText = "leaderbord"
+                rankDom.appendChild(rankHead)
+                // 在rankDom里面的末尾添加子div 
+                for (var i = 0; i < data.length; i++) {
+                    var rankItem = document.createElement("div")
+                    rankItem.className = "leaderbord-item"
+                    rankItem.innerText = `${data[i][0]}  ${data[i][1]}`
+                    //如果data[i].stuId = cookie的stu-id 那么就高亮
+                    if (data[i][0] == Cookies.get("stu-id")) {
+                        rankItem.className += " leaderbord-highlight"
+                    }
+                    rankDom.appendChild(rankItem)
+                }
+            });
+    }
+
+    // 获取用户最新消息 更新左侧状态栏
+    function queryUserInfo() {
+        fetch(`/api/getuser?stuId=${Cookies.get("stu-id")}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status == 1) {
+                    document.querySelector("#stuid").innerText = `stuid: ${Cookies.get("stu-id")}`
+                    document.querySelector("#times").innerText = `times: ${data.times}`
+                    document.querySelector("#score").innerText = `score: ${data.score}`
+                }
+            });
+    }
+
+    // 定时事件
+    function startPinging() {
+        pingInterval = setInterval(watching, 200);
+        // pingUserInfo = setInterval(queryUserInfo, 500);
+        pingRank = setInterval(getRank, 3000)
+    }
+
+    function stopPinging() {
+        clearInterval(pingInterval);
+        // clearInterval(pingUserInfo);
+        clearInterval(pingRank);
+    }
+
+    // 请求单词
+    function query() {
+        // console.log("query the word from server")
+        round++;
+        socket.emit('query')
+        queryUserInfo()
+    }
+
+
+</script>
+<script>
+
+    const socket = io();
+
+    //accpet 开始游戏
+    socket.on('accept', function () {
+        console.log('Received accept from server');
+        query();
+    });
+
+    //timeout 
+    socket.on("timeout", function () {
+        console.log("timeout");
+        query();
+    })
+
+    //更新游戏信息 当前的时间, 当前的分数
+    socket.on('update', function (info) {
+        // console.log(info)//score time
+        document.querySelector("#lefttime").innerText = info.time
+        // 获取round下面的所有div  info.history 
+        for (var i = 0; i < Math.min(info.history.length, 10); i++) {
+            //第i个 div
+            var roundBox = document.querySelector(".round-box:nth-child(" + (i + 1) + ")")
+            if (info.history[i] == 1) {
+                roundBox.style.backgroundColor = "green"
+            }
+            else {
+                roundBox.style.backgroundColor = "red"
+            }
+        }
+    });
+
+    socket.on('reject', function (msg) {
+        console.log("be rejected")
+    });
+
+    //服务器发题目
+    socket.on('word', function (msg) {
+        var { explanation, word: enpWord } = msg;
+        question = enpWord
+        //清空word
+        word = ""
+        printword(word, ".bottom")
+
+        isSended = false;
+
+        //mid
+        document.querySelector(".mid").innerText = explanation;
+        //top
+        document.querySelector(".top").innerText = enpWord;
+    });
+
+    //答案错误
+    socket.on('wrong', function (msg) {
+        document.querySelector(".top").innerText = msg.answer;
+        warnning(".bottom")
+        console.log("wrong")
+        setTimeout(() => {
+            query();
+        }, 2000);
+    });
+
+    //答案正确
+    socket.on('correct', function (msg) {
+        document.querySelector(".top").innerText = msg.answer;
+        console.log("correct")
+        correct(".bottom")
+        setTimeout(() => {
+            query();
+        }, 2000);
+    });
+
+    //游戏结束 gameover
+    socket.on('gameover', function (msg) {
+        stopPinging();
+        console.log('game over');
+        gameTime = false
+        //显示时间到
+        var timeup = document.querySelector(".timeup")
+        //文本修改time up
+        timeup.style.display = "block"
+        timeup.querySelector("p").innerText = "Game Over"
+        //清空mid
+        var mid = document.querySelector(".mid")
+        mid.innerText = "Please reload the page to start a new game."
+        //清空top
+        var top = document.querySelector(".top")
+        top.innerText = ""
+        //清空bottom
+        var bottom = document.querySelector(".bottom")
+        bottom.innerHTML = ""
+        //清空gameinfo
+        var gameinfo = document.querySelector(".gameinfo")
+        gameinfo.style.display = "none"
+
+        queryUserInfo();
+    });
+
+
+</script>
+
+
+<script>
+    // 在页面加载完成后调用检测函数
+    window.onload = function () {
+        checkCookie();
+        getRank();
+        queryUserInfo();
+    };
+
+    setTimeout(stopPinging, 600000);
+</script>
+
+</html>
