@@ -1,9 +1,9 @@
 from flask import Flask, request,jsonify, render_template
 from flask_socketio import SocketIO, disconnect, emit
-from datetime import datetime, timedelta
 import random
 import json
 import db.db as db
+from datetime import datetime
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
@@ -78,7 +78,7 @@ def submit_word(user_submit, user_round):
         # 
         print(f'Client {id} disconnected')
         return
- 
+    clientTime = client[id]['time']
     client[id]['time'] = datetime.now()
     print("user submit:" + user_submit)
     round = client[id]['round']
@@ -88,10 +88,12 @@ def submit_word(user_submit, user_round):
     if user_round != round + 1:
         return
     
+    # BUG:这里有一个并发隐患，当代码运行到这一段的时候 下面维护的client[id]['round']可能已经被更新了，要加锁
     # 判断是否正确
     if user_submit == answer:
         client[id]['score'] += 1
         client[id]['history'].append(1)
+        client[id]['consumption'] += (datetime.now() - clientTime).seconds
         socketio.emit('correct',{'answer':answer}, room=id)
         print(f'Client {id} submit correct')    
     else:
@@ -99,7 +101,9 @@ def submit_word(user_submit, user_round):
         client[id]['history'].append(0)
         print(f'Client {id} submit wrong')
 
-    db.update_score(client[id]['stuId'], client[id]['score'])
+    # 消耗的时间 / 正确的个数 
+    avgTime = client[id]['consumption'] / client[id]['score'] if client[id]['score'] != 0 else 0
+    db.update_score(client[id]['stuId'], client[id]['score'], avgTime)
     # 更新round
     client[id]['round'] += 1
     
@@ -114,7 +118,7 @@ def handle_start(stuId):
     db.update_times(stuId, -1)      
 
     # 客户端注册
-    client[id] = {'time':datetime.now(), 'stuId':stuId, 'score':0, 'round':0, 'words':db.get_word(),'history':[]}
+    client[id] = {'time':datetime.now(), 'stuId':stuId, 'score':0, 'round':0, 'words':db.get_word(),'history':[], 'consumption':0}
 
     print(f'words: {client[id]["words"]}')
     # 向客户端发送accept消息
@@ -134,38 +138,32 @@ def check_timeout():
         now = datetime.now()
         # cline的key
         for id in list(client.keys()):
-            playerInfo = {}
-            playerInfo['score'] = client[id]['score']
-            playerInfo['time'] = GAMETIME - (now - client[id]['time']).seconds 
-            playerInfo['history'] = client[id]['history']
-            if playerInfo['time'] < 0:
+            sendPlayerInfo = {}
+            sendPlayerInfo['score'] = client[id]['score']
+            sendPlayerInfo['time'] = GAMETIME - (now - client[id]['time']).seconds 
+            sendPlayerInfo['history'] = client[id]['history']
+            if sendPlayerInfo['time'] < 0:
                 if client[id]['round'] >= MAXROUND:
                     handle_disconnect(id)
                     socketio.emit('gameover', room=id)
                 else:
+                    socketio.emit('wrong',{'answer':client[id]['words'][client[id]['round']][1]}, room=id)
                     client[id]['round']+=1
                     client[id]['history'].append(0)
-                    socketio.emit('timeout', room=id)
-
+                    client[id]['time'] = datetime.now()
                 continue
             else:
-                socketio.emit('update', playerInfo, room=id)
-        socketio.sleep(1)       
+                socketio.emit('update', sendPlayerInfo, room=id)
+        socketio.sleep(0.5)       
 
 # 每日更新数据 这里需要优化）
 def renew_daily():
     while True:
         now = datetime.now()
         if now.hour == 0 and now.minute == 0:
-            out = now.strftime("%Y-%m-%d")
-            print(out)
-            file = open("/home/fxw/workspace/typegame/rank.log", "a")
-            file.write(out + "\n")
-            for i in db.get_rank():
-                file.write(str(i) + "\n")
-            file.close()
-            db.init()
+            db.renew_daily()
             socketio.sleep(60)
+        socketio.sleep(1)
                 
 if __name__ == '__main__':
     socketio.start_background_task(target=check_timeout)

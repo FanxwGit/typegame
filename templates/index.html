@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.7.5/dist/socket.io.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
@@ -469,11 +469,13 @@
         query();
     });
 
-    //timeout 
+    /*
+      //timeout 
     socket.on("timeout", function () {
         console.log("timeout");
         query();
     })
+    */
 
     //更新游戏信息 当前的时间, 当前的分数
     socket.on('update', function (info) {
