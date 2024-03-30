@@ -1,4 +1,5 @@
 import datetime
+import json
 
 # 管理数据库
 """
@@ -12,11 +13,18 @@ import datetime
 """
 
 
+# 获取数据库地址
+def get_addr():
+    with open("config.json", "r") as f:
+        config = json.load(f)
+    return config
+
+
 # 建表
 def create_table():
     import sqlite3
 
-    conn = sqlite3.connect("db/typegame.sqlite")
+    conn = sqlite3.connect(get_addr()["database"])
     c = conn.cursor()
     # 删除所有表格
     c.execute("DROP TABLE IF EXISTS user")
@@ -38,10 +46,10 @@ def create_table():
 def init_user():
     import sqlite3
 
-    conn = sqlite3.connect("db/typegame.sqlite")
+    conn = sqlite3.connect(get_addr()["database"])
     c = conn.cursor()
     # 读取userinfo.txt
-    with open("data/userinfo.txt", "r") as f:
+    with open(get_addr()["userinfo"], "r") as f:
         lines = f.readlines()
     # 删除该表格信息
     c.execute("DELETE FROM user")
@@ -60,10 +68,10 @@ def init_user():
 def init_word():
     import sqlite3
 
-    conn = sqlite3.connect("db/typegame.sqlite")
+    conn = sqlite3.connect(get_addr()["database"])
     c = conn.cursor()
     # 读取word.txt
-    with open("data/words.txt", "r") as f:
+    with open(get_addr()["words"], "r") as f:
         lines = f.readlines()
     # 删除该表格信息
     c.execute("DELETE FROM word")
@@ -81,7 +89,7 @@ def init_word():
 def select_all():
     import sqlite3
 
-    conn = sqlite3.connect("db/typegame.sqlite")
+    conn = sqlite3.connect(get_addr()["database"])
     c = conn.cursor()
     c.execute("SELECT * FROM user")
     print(c.fetchall())
@@ -95,7 +103,7 @@ def select_all():
 def delete_table(table):
     import sqlite3
 
-    conn = sqlite3.connect("db/typegame.sqlite")
+    conn = sqlite3.connect(get_addr()["database"])
     c = conn.cursor()
     c.execute(f"DROP TABLE {table}")
     conn.commit()
@@ -117,7 +125,7 @@ def init():
 def check_id(id):
     import sqlite3
 
-    conn = sqlite3.connect("db/typegame.sqlite")
+    conn = sqlite3.connect(get_addr()["database"])
     c = conn.cursor()
     c.execute("SELECT * FROM user where stuId = ?", (id,))  # (1, 'CST19011', 10, 0)
     result = c.fetchone()
@@ -129,7 +137,7 @@ def check_id(id):
 def update_times(id, value):
     import sqlite3
 
-    conn = sqlite3.connect("db/typegame.sqlite")
+    conn = sqlite3.connect(get_addr()["database"])
     c = conn.cursor()
     c.execute("UPDATE user SET times = times + ? WHERE stuId = ?", (value, id))
     conn.commit()
@@ -140,7 +148,7 @@ def update_times(id, value):
 def get_word():
     import sqlite3
 
-    conn = sqlite3.connect("db/typegame.sqlite")
+    conn = sqlite3.connect(get_addr()["database"])
     c = conn.cursor()
     c.execute("SELECT * FROM word ORDER BY RANDOM() LIMIT 10")
     result = c.fetchall()
@@ -153,7 +161,7 @@ def get_word():
 def update_score(id, score, consumption):
     import sqlite3
 
-    conn = sqlite3.connect("db/typegame.sqlite")
+    conn = sqlite3.connect(get_addr()["database"])
     c = conn.cursor()
     # 获取当前分数
     c.execute("SELECT score, consumption FROM user WHERE stuId = ?", (id,))
@@ -179,7 +187,7 @@ def update_score(id, score, consumption):
 def get_rank():
     import sqlite3
 
-    conn = sqlite3.connect("db/typegame.sqlite")
+    conn = sqlite3.connect(get_addr()["database"])
     c = conn.cursor()
     # 先按分数降序，再按时间升序 不要时间为空的
     c.execute(
@@ -194,7 +202,7 @@ def get_rank():
 def get_all_user():
     import sqlite3
 
-    conn = sqlite3.connect("db/typegame.sqlite")
+    conn = sqlite3.connect(get_addr()["database"])
     c = conn.cursor()
     c.execute("SELECT * FROM user")
     result = c.fetchall()
@@ -204,7 +212,7 @@ def get_all_user():
 
 # 每日数据存档
 def renew_daily():
-    file = open("db/rank.log", "a")
+    file = open(get_addr()["rank"], "a")
     now = datetime.datetime.now().strftime("%Y-%m-%d")
     file.write(now + "\n")
     for i in get_rank():

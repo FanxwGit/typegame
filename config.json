@@ -1,0 +1,6 @@
+{
+    "database": "db/typegame.sqlite",
+    "rank": "db/rank.log",
+    "words": "data/words.txt",
+    "userinfo": "data/userinfo.txt"
+}

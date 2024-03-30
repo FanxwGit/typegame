@@ -202,5 +202,4 @@ def renew_daily():
 
 if __name__ == "__main__":
     socketio.start_background_task(target=check_timeout)
-    socketio.start_background_task(target=renew_daily)
-    socketio.run(app, allow_unsafe_werkzeug=True)
+    socketio.run(app)
