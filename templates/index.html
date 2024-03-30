@@ -306,10 +306,30 @@
         bottom.innerText = s
     }
 
+    // sound effect
+    function soundEffect(type) {
+        var filename;
+        var audio;
+        switch (type) {
+            case 'correct':
+                audio = new Audio(`{{ url_for('static', filename='sounds/correct-pop.mp3') }}`)
+                break;
+            case 'wrong':
+                audio = new Audio(`{{ url_for('static', filename='sounds/wrong-buzz.mp3') }}`)
+
+                break;
+            default:
+                audio = new Audio(`{{ url_for('static', filename='sounds/correct-pop.mp3') }}`)
+
+        }
+        audio.play();
+    }
+
     // 动画函数
     function warnning(dom) {
         //把.bottom里面的字体变红0.5秒，再变回来，再变0.5 秒再回来
         var bottom = document.querySelector(dom)
+        soundEffect('wrong');
         bottom.style.color = "red"
         setTimeout(() => {
             bottom.style.color = "black"
@@ -327,6 +347,7 @@
         //把.bottom里面的字体变绿0.5秒，再变回来，异步
         var bottom = document.querySelector(dom)
         bottom.style.color = "green"
+        soundEffect('correct');
         setTimeout(() => {
             bottom.style.color = "black"
             setTimeout(() => {

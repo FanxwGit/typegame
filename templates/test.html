@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <!-- index.html -->
+    <!-- <audio src="{{ url_for('static', filename='sounds/correct-pop.mp3') }}" controls></audio> -->
+    <!-- index.html -->
+    <button id="playSound">Play Sound</button>
+</body>
+
+<script>
+    // static/js/app.js
+    document.getElementById('playSound').addEventListener('click', function () {
+        var audio = new Audio("{{ url_for('static', filename='sounds/correct-pop.mp3') }}");
+        audio.play();
+    });
+</script>
+
+</html>
