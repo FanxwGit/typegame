@@ -73,7 +73,7 @@ def query_word():
     # encrypt the word
     key = unencryptedWord[1][0] + "*"
     for i in range(2, len(unencryptedWord[1])):
-        if random.randint(0, 1) == 1:
+        if random.randint(0, 1) == 1 and unencryptedWord[1][i] != '-':
             key += "*"
         else:
             key += unencryptedWord[1][i]

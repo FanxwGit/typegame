@@ -221,6 +221,6 @@ def renew_daily():
     init()
 
 
-# if __name__ == '__main__':
-#     # init()
+if __name__ == '__main__':
+    init()
 #     # select_all()
