@@ -247,10 +247,14 @@
         // /
         else if (key >= 65 && key <= 90 || key == 189) {
             if (word.length < maxWord) {
-                if (key >= 65 && key <= 90)
-                    word += String.fromCharCode(key).toLowerCase()
-                else if (key == 189)
+                if (key >= 65 && key <= 90) {
+                    soundEffect('typing')
+                    word += String.fromCharCode(key).toLowerCase();
+                }
+                else if (key == 189) {
+                    soundEffect('typing')
                     word += "-"
+                }
 
             }
             else {
@@ -317,7 +321,9 @@
                 break;
             case 'wrong':
                 audio = new Audio(`{{ url_for('static', filename='sounds/wrong-buzz.mp3') }}`)
-
+                break;
+            case 'typing':
+                audio = new Audio(`{{ url_for('static', filename='sounds/type.mp3') }}`)
                 break;
             default:
                 audio = new Audio(`{{ url_for('static', filename='sounds/correct-pop.mp3') }}`)
