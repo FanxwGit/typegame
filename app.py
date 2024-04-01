@@ -89,7 +89,6 @@ def submit_word(user_submit, user_round):
     if id in client:
         print(f"Client {id} reconnected")
     else:
-        #
         print(f"Client {id} disconnected")
         return
     clientTime = client[id]["time"]
@@ -99,6 +98,7 @@ def submit_word(user_submit, user_round):
     answer = client[id]["words"][round][1]
 
     # 错误轮次
+    # 这行代码主要是解决，当user发过来的一瞬间，后台系统已经判定超时了
     if user_round != round + 1:
         return
 
