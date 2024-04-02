@@ -66,7 +66,7 @@ def init_word():
     conn = sqlite3.connect(get_addr()["database"])
     c = conn.cursor()
     # 读取word.txt
-    with open(get_addr()["words"], "r") as f:
+    with open(get_addr()["words"], "r", encoding="utf-8") as f:
         lines = f.readlines()
     # 删除该表格信息
     c.execute("DELETE FROM word")
@@ -156,7 +156,9 @@ def update_score(id, score, consumption):
     consumption = round(consumption, 1)
     print(consumption, result)
     # 新的成绩
-    if result[0] < score or (result[0] == score and (result[1] == None or result[1] > consumption) ):
+    if result[0] < score or (
+        result[0] == score and (result[1] == None or result[1] > consumption)
+    ):
         c.execute(
             "UPDATE user SET score = ?, consumption = ? WHERE stuId = ?",
             (score, consumption, id),
@@ -198,5 +200,6 @@ def renew_daily():
     file.close()
     init()
 
-if __name__ == '__main__':
-    temp()
+
+if __name__ == "__main__":
+    init()
