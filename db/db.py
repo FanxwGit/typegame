@@ -198,19 +198,5 @@ def renew_daily():
     file.close()
     init()
 
-#2024-04-02数据备份用
-def temp():
-    init()
-    conn = sqlite3.connect(get_addr()["database"])
-    c = conn.cursor()
-    score = 9 
-    id = 'INB21016'
-    consumption = 25.2
-    c.execute( "UPDATE user SET score = ?, consumption = ?, times = ? WHERE stuId = ?",
-            (score, consumption, 0, id))
-    conn.commit()
-    conn.close()
-
-
 if __name__ == '__main__':
     temp()
