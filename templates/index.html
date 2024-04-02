@@ -155,9 +155,31 @@
             flex-direction: column;
         }
 
+        /* 每个排行榜的item */
         .leaderbord-item {
             font-size: 0.8vw;
             margin-top: 0.7vw;
+            cursor: pointer;
+        }
+
+        .leaderbord-item .tip-box {
+            position: absolute;
+            /* 调整这个值来控制提示框距离 .item 的距离 */
+            left: -40%;
+            transform: translateY(-100%);
+            /* transform: translateX(-100%); */
+            background-color: #333;
+            color: #fff;
+            padding: 0;
+            font-size: 0.5vw;
+            border-radius: 4px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .leaderbord-item:hover .tip-box {
+            opacity: 1;
         }
 
         .leaderbord-head {
@@ -443,11 +465,17 @@
                 for (var i = 0; i < data.length; i++) {
                     var rankItem = document.createElement("div")
                     rankItem.className = "leaderbord-item"
-                    rankItem.innerText = `${data[i][0]}  ${data[i][1]}`
+                    rankItem.innerText = `${data[i][0]} ${data[i][1]}`
                     //如果data[i].stuId = cookie的stu-id 那么就高亮
                     if (data[i][0] == Cookies.get("stu-id")) {
                         rankItem.className += " leaderbord-highlight"
                     }
+
+                    var tip = document.createElement("div")
+                    tip.className = "tip-box pixel"
+                    tip.innerText = `${data[i][2]}s`
+                    rankItem.appendChild(tip)
+
                     rankDom.appendChild(rankItem)
                 }
             });
@@ -510,7 +538,7 @@
     //更新游戏信息 当前的时间, 当前的分数
     socket.on('update', function (info) {
         // console.log(info)//score time
-        document.querySelector("#lefttime").innerText = info.time
+        document.querySelector("#lefttime").innerText = Math.ceil(info.time)
         // 获取round下面的所有div  info.history 
         for (var i = 0; i < Math.min(info.history.length, 10); i++) {
             //第i个 div

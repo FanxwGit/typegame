@@ -1,5 +1,6 @@
 import datetime
 import json
+import sqlite3
 
 # 管理数据库
 """
@@ -22,8 +23,6 @@ def get_addr():
 
 # 建表
 def create_table():
-    import sqlite3
-
     conn = sqlite3.connect(get_addr()["database"])
     c = conn.cursor()
     # 删除所有表格
@@ -31,7 +30,7 @@ def create_table():
     c.execute("DROP TABLE IF EXISTS word")
     # 时间默认空
     c.execute(
-        "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY AUTOINCREMENT, stuId TEXT, times INTEGER, score INTEGER, consumption INTEGER)"
+        "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY AUTOINCREMENT, stuId TEXT, times INTEGER, score INTEGER, consumption NUMERIC(5,1))"
     )
     c.execute(
         "CREATE TABLE IF NOT EXISTS word (id INTEGER PRIMARY KEY AUTOINCREMENT, word TEXT, explanation TEXT)"
@@ -44,8 +43,6 @@ def create_table():
 
 
 def init_user():
-    import sqlite3
-
     conn = sqlite3.connect(get_addr()["database"])
     c = conn.cursor()
     # 读取userinfo.txt
@@ -66,8 +63,6 @@ def init_user():
 
 # 单词表格初始化
 def init_word():
-    import sqlite3
-
     conn = sqlite3.connect(get_addr()["database"])
     c = conn.cursor()
     # 读取word.txt
@@ -87,8 +82,6 @@ def init_word():
 
 # 查看各个表格
 def select_all():
-    import sqlite3
-
     conn = sqlite3.connect(get_addr()["database"])
     c = conn.cursor()
     c.execute("SELECT * FROM user")
@@ -101,8 +94,6 @@ def select_all():
 
 # 删除指定表格
 def delete_table(table):
-    import sqlite3
-
     conn = sqlite3.connect(get_addr()["database"])
     c = conn.cursor()
     c.execute(f"DROP TABLE {table}")
@@ -123,8 +114,6 @@ def init():
 
 # 查询获取对应id的信息，如果没获取到就返回null
 def check_id(id):
-    import sqlite3
-
     conn = sqlite3.connect(get_addr()["database"])
     c = conn.cursor()
     c.execute("SELECT * FROM user where stuId = ?", (id,))  # (1, 'CST19011', 10, 0)
@@ -135,8 +124,6 @@ def check_id(id):
 
 # 修改剩余次数
 def update_times(id, value):
-    import sqlite3
-
     conn = sqlite3.connect(get_addr()["database"])
     c = conn.cursor()
     c.execute("UPDATE user SET times = times + ? WHERE stuId = ?", (value, id))
@@ -146,8 +133,6 @@ def update_times(id, value):
 
 # 随机10个单词
 def get_word():
-    import sqlite3
-
     conn = sqlite3.connect(get_addr()["database"])
     c = conn.cursor()
     c.execute("SELECT * FROM word ORDER BY RANDOM() LIMIT 10")
@@ -159,8 +144,6 @@ def get_word():
 
 # 修改分数
 def update_score(id, score, consumption):
-    import sqlite3
-
     conn = sqlite3.connect(get_addr()["database"])
     c = conn.cursor()
     # 获取当前分数
@@ -170,11 +153,10 @@ def update_score(id, score, consumption):
         print("can't find specified user")
         return
     # 如果当前分数小于新分数，更新分数
+    consumption = round(consumption, 1)
     print(consumption, result)
     # 新的成绩
-    if result[0] < score or (
-        result[0] == score and (result == None or result[1] > consumption)
-    ):
+    if result[0] < score or (result[0] == score and (result[1] == None or result[1] > consumption) ):
         c.execute(
             "UPDATE user SET score = ?, consumption = ? WHERE stuId = ?",
             (score, consumption, id),
@@ -185,13 +167,11 @@ def update_score(id, score, consumption):
 
 # 获取排行
 def get_rank():
-    import sqlite3
-
     conn = sqlite3.connect(get_addr()["database"])
     c = conn.cursor()
     # 先按分数降序，再按时间升序 不要时间为空的
     c.execute(
-        "SELECT stuId, score FROM user WHERE consumption IS NOT NULL ORDER BY score DESC, consumption"
+        "SELECT stuId, score, consumption FROM user WHERE consumption IS NOT NULL ORDER BY score DESC, consumption"
     )
     result = c.fetchall()
     conn.close()
@@ -200,8 +180,6 @@ def get_rank():
 
 # 获取用户信息
 def get_all_user():
-    import sqlite3
-
     conn = sqlite3.connect(get_addr()["database"])
     c = conn.cursor()
     c.execute("SELECT * FROM user")
@@ -220,7 +198,19 @@ def renew_daily():
     file.close()
     init()
 
+#2024-04-02数据备份用
+def temp():
+    init()
+    conn = sqlite3.connect(get_addr()["database"])
+    c = conn.cursor()
+    score = 9 
+    id = 'INB21016'
+    consumption = 25.2
+    c.execute( "UPDATE user SET score = ?, consumption = ?, times = ? WHERE stuId = ?",
+            (score, consumption, 0, id))
+    conn.commit()
+    conn.close()
+
 
 if __name__ == '__main__':
-    init()
-#     # select_all()
+    temp()

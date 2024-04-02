@@ -4,6 +4,7 @@ import random
 import json
 import db.db as db
 from datetime import datetime
+import time
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")
@@ -62,7 +63,7 @@ def query_word():
         socketio.emit("reject", room=id)
         return
 
-    client[id]["time"] = datetime.now()
+    client[id]["time"] = time.time()
     round = client[id]["round"]
     if round == 10:
         handle_disconnect(id)
@@ -92,7 +93,7 @@ def submit_word(user_submit, user_round):
         print(f"Client {id} disconnected")
         return
     clientTime = client[id]["time"]
-    client[id]["time"] = datetime.now()
+    client[id]["time"] = time.time()
     print("user submit:" + user_submit)
     round = client[id]["round"]
     answer = client[id]["words"][round][1]
@@ -107,7 +108,7 @@ def submit_word(user_submit, user_round):
     if user_submit == answer:
         client[id]["score"] += 1
         client[id]["history"].append(1)
-        client[id]["consumption"] += (datetime.now() - clientTime).seconds
+        client[id]["consumption"] += time.time()- clientTime
         socketio.emit("correct", {"answer": answer}, room=id)
         print(f"Client {id} submit correct")
     else:
@@ -116,12 +117,7 @@ def submit_word(user_submit, user_round):
         print(f"Client {id} submit wrong")
 
     # 消耗的时间 / 正确的个数
-    avgTime = (
-        client[id]["consumption"] / client[id]["score"]
-        if client[id]["score"] != 0
-        else 0
-    )
-    db.update_score(client[id]["stuId"], client[id]["score"], avgTime)
+    db.update_score(client[id]["stuId"], client[id]["score"], client[id]["consumption"])
     # 更新round
     client[id]["round"] += 1
 
@@ -138,7 +134,7 @@ def handle_start(stuId):
 
     # 客户端注册
     client[id] = {
-        "time": datetime.now(),
+        "time": time.time(),
         "stuId": stuId,
         "score": 0,
         "round": 0,
@@ -164,12 +160,12 @@ def handle_disconnect(cid):
 # 维护玩家信息
 def check_timeout():
     while True:
-        now = datetime.now()
+        now = time.time()
         # cline的key
         for id in list(client.keys()):
             sendPlayerInfo = {}
             sendPlayerInfo["score"] = client[id]["score"]
-            sendPlayerInfo["time"] = GAMETIME - (now - client[id]["time"]).seconds
+            sendPlayerInfo["time"] = GAMETIME - (now - client[id]["time"])
             sendPlayerInfo["history"] = client[id]["history"]
             if sendPlayerInfo["time"] < 0:
                 if client[id]["round"] >= MAXROUND:
@@ -183,7 +179,7 @@ def check_timeout():
                     )
                     client[id]["round"] += 1
                     client[id]["history"].append(0)
-                    client[id]["time"] = datetime.now()
+                    client[id]["time"] = time.time()
                 continue
             else:
                 socketio.emit("update", sendPlayerInfo, room=id)
