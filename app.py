@@ -74,7 +74,7 @@ def query_word():
     # encrypt the word
     key = unencryptedWord[1][0] + "*"
     for i in range(2, len(unencryptedWord[1])):
-        if random.randint(0, 1) == 1 and unencryptedWord[1][i] != "-":
+        if random.randint(0, 1) == 1 and unencryptedWord[1][i] != '-':
             key += "*"
         else:
             key += unencryptedWord[1][i]
@@ -108,7 +108,7 @@ def submit_word(user_submit, user_round):
     if user_submit == answer:
         client[id]["score"] += 1
         client[id]["history"].append(1)
-        client[id]["consumption"] += time.time() - clientTime
+        client[id]["consumption"] += time.time()- clientTime
         socketio.emit("correct", {"answer": answer}, room=id)
         print(f"Client {id} submit correct")
     else:
@@ -116,37 +116,30 @@ def submit_word(user_submit, user_round):
         client[id]["history"].append(0)
         print(f"Client {id} submit wrong")
 
-    # 消耗的时间 / 正确的个数
     db.update_score(client[id]["stuId"], client[id]["score"], client[id]["consumption"])
     # 更新round
     client[id]["round"] += 1
-    # 如果score大于last_score，设置 combo=1,times+1
-    if client[id]["score"] > client[id]["last_score"] and client[id]["combo"] == 0:
-        client[id]["combo"] = 1
-        db.update_times(client[id]["stuId"], 1)
 
 
 @socketio.on("start")
 def handle_start(stuId):
     id = request.sid
     print(f"Client {id} start")
-    # 检测用户的time是否>0
-    if db.check_id(stuId)[2] < 0:
+    # 检测用户是否能参与
+    if db.check_id(stuId)[2] == 0:
         socketio.emit("reject", room=id)
         return
-    db.update_times(stuId, -1)
+    db.update_times(stuId, 0)
 
     # 客户端注册
     client[id] = {
         "time": time.time(),
         "stuId": stuId,
         "score": 0,
-        "last_score": db.check_id(stuId)[3],
         "round": 0,
         "words": db.get_word(),
         "history": [],
         "consumption": 0,
-        "combo": 0,
     }
 
     print(f'words: {client[id]["words"]}')
@@ -205,4 +198,4 @@ def renew_daily():
 if __name__ == "__main__":
     socketio.start_background_task(target=check_timeout)
     socketio.start_background_task(target=renew_daily)
-    socketio.run(app, allow_unsafe_werkzeug=True)
+    socketio.run(app,allow_unsafe_werkzeug=True) 

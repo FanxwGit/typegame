@@ -209,6 +209,7 @@
     <div class="timeup">
         <p id="lefttime"></p>
     </div>
+
     <div class="gameinfo pixel">
         <!-- 四个伸缩格子 left1份 right3份 -->
         <div class="gameinfo-right" id="round">
@@ -233,9 +234,10 @@
         <div class="bottom">
         </div>
     </div>
+
     <div class="info pixel">
         <div class="item minifont" id="stuid">stuid: </div>
-        <div class="item minifont" id="times">times: 0</div>
+        <div class="item minifont" id="times"><span>state: </span><span id="eligibility"></span></div>
         <div class="item minifont" id="score">score: 0</div>
     </div>
 
@@ -316,8 +318,8 @@
             .then(data => {
                 if (data.status == 1) {
                     document.querySelector("#stuid").innerText = `stuid: ${stuId}`
-                    document.querySelector("#times").innerText = `times: ${data.times}`
                     document.querySelector("#score").innerText = `score: ${data.score}`
+                    updateEligibility(data.times)
                     Cookies.set("stu-id", stuId, 30);
                     startPinging();
                 } else {
@@ -481,6 +483,18 @@
             });
     }
 
+    // 更新用户是否可玩的状态
+    function updateEligibility(state) {
+        var eligibility = document.querySelector("#eligibility")
+        if (state == 0) {
+            eligibility.innerText = "ineligible"
+            eligibility.style.color = "red"
+        } else {
+            eligibility.innerText = "eligible"
+            eligibility.style.color = "green"
+        }
+    }
+
     // 获取用户最新消息 更新左侧状态栏
     function queryUserInfo() {
         fetch(`/api/getuser?stuId=${Cookies.get("stu-id")}`)
@@ -488,8 +502,8 @@
             .then(data => {
                 if (data.status == 1) {
                     document.querySelector("#stuid").innerText = `stuid: ${Cookies.get("stu-id")}`
-                    document.querySelector("#times").innerText = `times: ${data.times}`
                     document.querySelector("#score").innerText = `score: ${data.score}`
+                    updateEligibility(data.times)
                 }
             });
     }

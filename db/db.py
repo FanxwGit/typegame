@@ -55,7 +55,7 @@ def init_user():
         stuId = line.strip()
         if stuId != None:
             c.execute(
-                "INSERT INTO user (stuId, times, score) VALUES (?, ?, ?)", (stuId, 2, 0)
+                "INSERT INTO user (stuId, times, score) VALUES (?, ?, ?)", (stuId, 1, 0)
             )
     conn.commit()
     conn.close()
@@ -126,7 +126,7 @@ def check_id(id):
 def update_times(id, value):
     conn = sqlite3.connect(get_addr()["database"])
     c = conn.cursor()
-    c.execute("UPDATE user SET times = times + ? WHERE stuId = ?", (value, id))
+    c.execute("UPDATE user SET times = ? WHERE stuId = ?", (value, id))
     conn.commit()
     conn.close()
 
@@ -146,26 +146,26 @@ def get_word():
 def update_score(id, score, consumption):
     conn = sqlite3.connect(get_addr()["database"])
     c = conn.cursor()
+    
     # 获取当前分数
     c.execute("SELECT score, consumption FROM user WHERE stuId = ?", (id,))
     result = c.fetchone()
-    if result == None:
-        print("can't find specified user")
-        return
+
     # 如果当前分数小于新分数，更新分数
     consumption = round(consumption, 1)
-    print(consumption, result)
-    # 新的成绩
-    if result[0] < score or (
-        result[0] == score and (result[1] == None or result[1] > consumption)
-    ):
+
+    # 修改的逻辑 1. 分数超越  2. 分数相同，耗时更短
+    isFaster = result[0] == score and (result[1] == None or result[1] > consumption)
+    if result[0] < score or isFaster:
         c.execute(
             "UPDATE user SET score = ?, consumption = ? WHERE stuId = ?",
             (score, consumption, id),
         )
     conn.commit()
     conn.close()
-
+    #每日默认只能玩一次 当前分数>=今日的最大分数，就能再玩一次
+    if result[0] <= score:
+        update_times(id, 1)
 
 # 获取排行
 def get_rank():
