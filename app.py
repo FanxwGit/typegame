@@ -64,7 +64,6 @@ def query_word():
         socketio.emit("reject", room=id)
         return
 
-    client[id]["time"] = time.time()
     round = client[id]["round"]
     if round == 10:
         handle_disconnect(id)
@@ -92,6 +91,7 @@ def query_word():
     # 将单词和语音数据一起发送到客户端
     data = {"enpWord": key, "explanation": unencryptedWord[2], "audioData": audio_data}
 
+    client[id]["time"] = time.time()
     # 向客户端发送单词
     socketio.emit("word", data, room=id)
 
