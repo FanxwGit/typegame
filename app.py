@@ -85,7 +85,6 @@ def query_word():
         audio_url = f"http://dict.youdao.com/dictvoice?type=1&audio={unencryptedWord[1]}"
         audio_response = requests.get(audio_url)
         audio_data = audio_response.content
-        print(type(audio_data))
     except Exception as e:
         print(f"获取音频数据失败: {e}")
         audio_data = None
