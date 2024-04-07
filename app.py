@@ -1,6 +1,7 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, make_response
 from flask_socketio import SocketIO, disconnect, emit
 import random
+import requests
 import json
 import db.db as db
 from datetime import datetime
@@ -74,13 +75,26 @@ def query_word():
     # encrypt the word
     key = unencryptedWord[1][0] + "*"
     for i in range(2, len(unencryptedWord[1])):
-        if random.randint(0, 1) == 1 and unencryptedWord[1][i] != '-':
+        if random.randint(0, 1) == 1 and unencryptedWord[1][i] != "-":
             key += "*"
         else:
             key += unencryptedWord[1][i]
 
+    # 获取语音数据
+    try:
+        audio_url = f"http://dict.youdao.com/dictvoice?type=1&audio={unencryptedWord[1]}"
+        audio_response = requests.get(audio_url)
+        audio_data = audio_response.content
+        print(type(audio_data))
+    except Exception as e:
+        print(f"获取音频数据失败: {e}")
+        audio_data = None
+
+    # 将单词和语音数据一起发送到客户端
+    data = {"enpWord": key, "explanation": unencryptedWord[2], "audioData": audio_data}
+
     # 向客户端发送单词
-    socketio.emit("word", {"word": key, "explanation": unencryptedWord[2]}, room=id)
+    socketio.emit("word", data, room=id)
 
 
 @socketio.on("submit")
@@ -108,7 +122,7 @@ def submit_word(user_submit, user_round):
     if user_submit == answer:
         client[id]["score"] += 1
         client[id]["history"].append(1)
-        client[id]["consumption"] += time.time()- clientTime
+        client[id]["consumption"] += time.time() - clientTime
         socketio.emit("correct", {"answer": answer}, room=id)
         print(f"Client {id} submit correct")
     else:
@@ -198,4 +212,4 @@ def renew_daily():
 if __name__ == "__main__":
     socketio.start_background_task(target=check_timeout)
     socketio.start_background_task(target=renew_daily)
-    socketio.run(app,allow_unsafe_werkzeug=True) 
+    socketio.run(app, allow_unsafe_werkzeug=True)

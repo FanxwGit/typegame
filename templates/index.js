@@ -1,3 +1,5 @@
+// 混淆加密网址
+// https://www.json.cn/jshx/
 var word = "";
 var maxWord = 15;
 var gameTime = false; //判断是否是游戏时间
@@ -317,19 +319,26 @@ socket.on("reject", function (msg) {
 });
 
 //服务器发题目
-socket.on("word", function (msg) {
-    var { explanation, word: enpWord } = msg;
-    question = enpWord;
+socket.on("word", function (data) {
+    question = data.enpWord;
     //清空word
     word = "";
     printword(word, ".bottom");
-
     isSended = false;
 
     //mid
-    document.querySelector(".mid").innerText = explanation;
+    document.querySelector(".mid").innerText = data.explanation;
     //top
-    document.querySelector(".top").innerText = enpWord;
+    document.querySelector(".top").innerText = data.enpWord;
+
+    // 创建Blob对象并播放语音
+    const audioBlob = new Blob([new Uint8Array(data.audioData)], {
+        type: "audio/mpeg",
+    });
+    const audioUrl = URL.createObjectURL(audioBlob);
+    const audioEl = new Audio(audioUrl);
+    audioEl.play();
+
 });
 
 //答案错误
@@ -377,6 +386,7 @@ socket.on("gameover", function (msg) {
 
     queryUserInfo();
 });
+
 // 在页面加载完成后调用检测函数
 window.onload = function () {
     checkCookie();
