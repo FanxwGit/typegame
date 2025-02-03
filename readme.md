@@ -8,11 +8,21 @@ pip install -r requirements.txt
 
 ## Usage
 
+Before starting, you need to initialize the database, which will load the data from the files in the data folder.
+
+```bash
+cd typegame
+python /db/db.py
+```
+
 To start the Flask application
 
 ```bash
 python app.py
 ```
+
+Then, simply enter the student ID from the /data/userinfo.txt file to start the game.
+
 
 ## Commit Message Format
 
